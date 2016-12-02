@@ -1,5 +1,5 @@
 (function() {
-  var bind, _self;
+  var bind, isMobile, _self;
 
   bind = (function() {
     if (window.addEventListener) {
@@ -11,7 +11,12 @@
         ele.attatchEvent('on' + type, handler)
       }
     }
-  })()
+  })();
+
+  isMobile = (function() {
+    var reg = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+    return reg.test(navigator.userAgent)
+  })();
 
   window.CanvasClip = function(setting) {
     /*canvas preview container*/
@@ -21,7 +26,7 @@
     /*image to be precessed*/
     this.source = setting.source;
     /*cliped-image compress quality*/
-    this.quality = setting.quality || 0.92;
+    this.quality = setting.quality || 0.86;
     /*clip-box info*/
     this.cutRect = {};
     /*cliped-image base64*/
@@ -34,6 +39,16 @@
     this.context = this.canvas.getContext('2d');
     /*img object to be drawed on canvas*/
     this.img = new Image;
+    /*canvasPosition*/
+    this.canvasPosition = {};
+
+
+    /*flag for checking mousedown,mousemove,mouseup-clip action*/
+    this._isMouseDown = false;
+    this._isMouseMoved = false;
+    this._isCliped = false;
+    this._isRectChanged = false;
+
 
     _self = this;
     /*init: drawImage && makeClip*/
@@ -78,6 +93,7 @@
     dataURLtoBlob();
 
     drawMaskImage();
+    _self._isCliped = false;
   }
 
   function dataURLtoBlob() {
@@ -90,9 +106,7 @@
       unitArray[i] = binaryString.charCodeAt(i);
     }
 
-    var data = unitArray;
-
-    _self.retBinary = new Blob(data, {
+    _self.retBinary = new Blob(unitArray, {
       type: mime
     });
   }
@@ -107,15 +121,23 @@
     _self.context.fillRect(0, 0, _self.canvas.width, _self.canvas.height);
     _self.context.restore();
 
+    _self.canvasPosition = _self.canvas.getBoundingClientRect();
+
   }
 
   function makeClip() {
-    var isMouseDown = false;
+
     var cutRect = {
       x: 0,
       y: 0,
       width: 0,
       height: 0
+    };
+    var clipedDownPoint = {
+      x: 0,
+      y: 0,
+      originalRectX: 0,
+      originalRectY: 0,
     };
 
     bind(_self.canvas, 'mousedown', touchDownHandler);
@@ -124,49 +146,141 @@
     bind(document, 'touchmove', touchMoveHandler);
     bind(document, 'mouseup', touchUpHandler);
     bind(document, 'touchend', touchUpHandler);
+    /*check if mousedown in cliped-box*/
+    function isInRect(x, y) {
+      console.log(x, y)
+      var beginX = cutRect.x,
+        endX = cutRect.x + cutRect.width,
+        beginY = cutRect.y,
+        endY = cutRect.y + cutRect.height;
+      return (beginX < x) && (x < endX) && (beginY < y) && (y < endY);
+    }
+
+
+    function drawClipBox(e) {
+      if (_self._isRectChanged) { //change clip-box size when clip not exists
+        var p = getCordinate(e);
+        cutRect.width = p.x - cutRect.x;
+        cutRect.height = p.y - cutRect.y;
+      }
+      _self.context.save();
+      _self.context.strokeStyle = 'red';
+      _self.context.setLineDash([4, 4]);
+      _self.context.lineDashOffset = 10;
+      _self.context.lineWidth = _self.clipLineWidth;
+      _self.context.beginPath();
+      _self.context.rect(cutRect.x, cutRect.y, cutRect.width, cutRect.height);
+      _self.context.clip();
+      _self.context.drawImage(_self.img, 0, 0, _self.canvas.width, _self.canvas.height);
+      _self.context.stroke();
+      _self.context.restore();
+    }
+
+    var getCordinate = (function() {
+      if (isMobile) {
+        return function(e) {
+          return {
+            x: e.changedTouches[0].clientX - _self.canvasPosition.left,
+            y: e.changedTouches[0].clientY - _self.canvasPosition.top,
+          }
+        }
+      } else {
+        return function(e) {
+          return {
+            x: e.offsetX,
+            y: e.offsetY,
+          }
+        }
+      }
+    })();
 
     function touchDownHandler(e) {
       e.preventDefault();
+      var p = getCordinate(e);
+      var x = p.x;
+      var y = p.y;
+      if (!_self._isCliped) { //to clip
+        cutRect.x = x;
+        cutRect.y = y;
+        _self._isMouseDown = true;
+      } else {
+        if (isInRect(x, y)) { //to move cliprect
+          clipedDownPoint.x = x;
+          clipedDownPoint.y = y;
+          clipedDownPoint.originalRectX = cutRect.x; // store the original clip info(x)
+          clipedDownPoint.originalRectY = cutRect.y; // store the original clip info(y)
+          _self._isMouseDown = true;
+        } else { //redraw canvas
+          drawMaskImage();
+          _self._isCliped = false;
+        }
+      }
+    }
+
+    function redrawClipedCanvas(e) {
+      /*reset canvas*/
+      _self.context.clearRect(0, 0, _self.canvas.width, _self.canvas.height);
       drawMaskImage();
-      cutRect.x = e.offsetX;
-      cutRect.y = e.offsetY;
-      isMouseDown = true;
+
+      /*draw clipBox*/
+      drawClipBox(e);
     }
 
     function touchMoveHandler(e) {
-      e.preventDefault();
+      if (e.target === _self.canvas) {
+        e.preventDefault();
+        if (_self._isMouseDown) {
 
-      if (isMouseDown) {
-        /*reset canvas*/
-        _self.context.clearRect(0, 0, _self.canvas.width, _self.canvas.height);
-        drawMaskImage();
+          _self._isMouseMoved = true;
 
-        /*draw clipBox*/
-        cutRect.width = e.offsetX - cutRect.x;
-        cutRect.height = e.offsetY - cutRect.y;
-        _self.context.save();
-        _self.context.strokeStyle = '#fff';
-        _self.context.setLineDash([4, 4]);
-        _self.context.lineDashOffset = 10;
-        _self.context.lineWidth = _self.clipLineWidth;
-        _self.context.beginPath();
-        _self.context.rect(cutRect.x, cutRect.y, cutRect.width, cutRect.height);
-        _self.context.clip();
-        _self.context.drawImage(_self.img, 0, 0, _self.canvas.width, _self.canvas.height);
-        _self.context.stroke();
-        _self.context.restore();
+          if (!_self._isCliped) {
+
+            _self._isRectChanged = true;
+            redrawClipedCanvas(e);
+
+          } else {
+            _self._isRectChanged = false;
+            var p = getCordinate(e);
+            /*draw clipBox*/
+            cutRect.x = clipedDownPoint.originalRectX + p.x - clipedDownPoint.x;
+            cutRect.y = clipedDownPoint.originalRectY + p.y - clipedDownPoint.y;
+
+            if (cutRect.x < 0) {
+              cutRect.x = 0
+            }
+            if (cutRect.x > _self.canvas.width - cutRect.width) {
+              cutRect.x = _self.canvas.width - cutRect.width;
+            }
+            if (cutRect.y < 0) {
+              cutRect.y = 0
+            }
+            if (cutRect.y > _self.canvas.height - cutRect.height) {
+              cutRect.y = _self.canvas.height - cutRect.height;
+            }
+
+
+            redrawClipedCanvas(e);
+          }
+        }
       }
     }
 
     function touchUpHandler(e) {
       e.preventDefault();
-      isMouseDown = false;
-      _self.cutRect = {
-        x: cutRect.x + _self.clipLineWidth / 2,
-        y: cutRect.y + _self.clipLineWidth / 2,
-        width: cutRect.width - _self.clipLineWidth,
-        height: cutRect.height - _self.clipLineWidth,
-      };
+      _self._isMouseDown = false;
+      if (_self._isMouseMoved) {
+        _self._isMouseMoved = false;
+        _self._isCliped = true;
+        /*process width and height less than 0*/
+        cutRect = {
+          x: cutRect.width < 0 ? (cutRect.x + _self.clipLineWidth / 2 + cutRect.width) : (cutRect.x + _self.clipLineWidth / 2),
+          y: cutRect.height < 0 ? (cutRect.y + _self.clipLineWidth / 2 + cutRect.height) : (cutRect.y + _self.clipLineWidth / 2),
+          width: Math.abs(cutRect.width) - _self.clipLineWidth,
+          height: Math.abs(cutRect.height) - _self.clipLineWidth,
+        };
+        _self.cutRect = cutRect;
+      }
     }
   }
+
 })()

@@ -6,6 +6,12 @@
   <title>Document</title>
   <meta name="viewport" content="width=750,user-scalable=no,target-densitydpi=device-dpi">
   <script type="text/javascript" src="canvas-clip.js"></script>
+  <style type="text/css">
+  canvas {
+    margin: 60px auto;
+    display: block;
+  }
+  </style>
 </head>
 
 <body>
@@ -20,13 +26,16 @@
     c = new CanvasClip({
       previewContainer: document.querySelector('#previewContainer'),
       source: file,
-      canvasWidth: 600
+      canvasWidth: 600,
     })
   }
-  clip.onclick = function() {
-    c.clip();
-    preview.src = c.ret64;
-  }
+  clip.addEventListener('click', function() {
+    try {
+      c.clip();
+      preview.src = c.ret64;
+
+    } catch (e) {}
+  }, false)
   </script>
 </body>
 
