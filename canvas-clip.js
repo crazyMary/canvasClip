@@ -31,6 +31,7 @@
     this.cutRect = {};
     /*cliped-image base64*/
     this.ret64 = '';
+    this.retBinary = null;
     /*clip line width*/
     this.clipLineWidth = 4;
     /*preview canvas dom*/
