@@ -11,5 +11,6 @@
 * canvasWidth: 预览canvas的width（默认400）
 * source：图片源文件
 * quality：压缩质量（默认0.86）
+
 具体使用参见[DEMO](https://crazymary.github.io/canvasClip/canvasClip.html)
 
