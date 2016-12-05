@@ -28,13 +28,10 @@
       source: file,
     })
   }
-  clip.addEventListener('click', function() {
-    try {
-      c.clip();
-      preview.src = c.ret64;
-
-    } catch (e) {}
-  }, false)
+  clip.addEventListener('click', function(e) {
+    c.clip();
+    preview.src = c.ret64;
+  }, false);
   </script>
 </body>
 

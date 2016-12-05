@@ -1,4 +1,4 @@
-(function() {
+(function(global) {
   var bind, isMobile, _self;
 
   bind = (function() {
@@ -18,7 +18,7 @@
     return reg.test(navigator.userAgent)
   })();
 
-  window.CanvasClip = function(setting) {
+  global.CanvasClip = function(setting) {
     /*canvas preview container*/
     this.previewContainer = setting.previewContainer;
     /*preview canvas width, default 400*/
@@ -141,15 +141,17 @@
       originalRectY: 0,
     };
 
-    bind(_self.canvas, 'mousedown', touchDownHandler);
-    bind(_self.canvas, 'touchstart', touchDownHandler);
-    bind(document, 'mousemove', touchMoveHandler);
-    bind(document, 'touchmove', touchMoveHandler);
-    bind(document, 'mouseup', touchUpHandler);
-    bind(document, 'touchend', touchUpHandler);
+    if (isMobile) {
+      bind(_self.canvas, 'touchstart', touchDownHandler);
+      bind(document, 'touchmove', touchMoveHandler);
+      bind(document, 'touchend', touchUpHandler);
+    } else {
+      bind(_self.canvas, 'mousedown', touchDownHandler);
+      bind(document, 'mousemove', touchMoveHandler);
+      bind(document, 'mouseup', touchUpHandler);
+    }
     /*check if mousedown in cliped-box*/
     function isInRect(x, y) {
-      console.log(x, y)
       var beginX = cutRect.x,
         endX = cutRect.x + cutRect.width,
         beginY = cutRect.y,
@@ -228,8 +230,9 @@
     }
 
     function touchMoveHandler(e) {
-      if (e.target === _self.canvas) {
-        e.preventDefault();
+      // e.preventDefault();
+      var target = isMobile ? document.elementFromPoint(e.touches[0].pageX, e.touches[0].pageY) : e.target;
+      if (target === _self.canvas) {
         if (_self._isMouseDown) {
 
           _self._isMouseMoved = true;
@@ -267,7 +270,6 @@
     }
 
     function touchUpHandler(e) {
-      e.preventDefault();
       _self._isMouseDown = false;
       if (_self._isMouseMoved) {
         _self._isMouseMoved = false;
@@ -284,4 +286,4 @@
     }
   }
 
-})()
+})(window)
