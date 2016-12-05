@@ -230,7 +230,7 @@
     }
 
     function touchMoveHandler(e) {
-      // e.preventDefault();
+      e.preventDefault();
       var target = isMobile ? document.elementFromPoint(e.touches[0].pageX, e.touches[0].pageY) : e.target; // mobile touchmove target not change
       if (target === _self.canvas) {
         if (_self._isMouseDown) {
