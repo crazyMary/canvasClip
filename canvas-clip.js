@@ -1,5 +1,5 @@
 (function(global) {
-  var bind, isMobile, _self;
+  var bind, isMobile, _self, CanvasClip;
 
   bind = (function() {
     if (window.addEventListener) {
@@ -18,7 +18,7 @@
     return reg.test(navigator.userAgent)
   })();
 
-  global.CanvasClip = function(setting) {
+  CanvasClip = function(setting) {
     /*canvas preview container*/
     this.previewContainer = setting.previewContainer;
     /*preview canvas width, default 400*/
@@ -278,6 +278,17 @@
         _self.cutRect = cutRect;
       }
     }
+  }
+
+  // support amd commonjs and global
+  if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return CanvasClip;
+    });
+  } else if (typeof module != 'undefined' && module.exports) {
+    module.exports = CanvasClip;
+  } else {
+    global.CanvasClip = CanvasClip;
   }
 
 })(window)
