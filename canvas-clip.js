@@ -231,17 +231,13 @@
 
     function touchMoveHandler(e) {
       // e.preventDefault();
-      var target = isMobile ? document.elementFromPoint(e.touches[0].pageX, e.touches[0].pageY) : e.target;
+      var target = isMobile ? document.elementFromPoint(e.touches[0].pageX, e.touches[0].pageY) : e.target; // mobile touchmove target not change
       if (target === _self.canvas) {
         if (_self._isMouseDown) {
-
           _self._isMouseMoved = true;
-
           if (!_self._isCliped) {
-
             _self._isRectChanged = true;
             redrawClipedCanvas(e);
-
           } else {
             _self._isRectChanged = false;
             var p = getCordinate(e);
@@ -261,8 +257,6 @@
             if (cutRect.y > _self.canvas.height - cutRect.height) {
               cutRect.y = _self.canvas.height - cutRect.height;
             }
-
-
             redrawClipedCanvas(e);
           }
         }
