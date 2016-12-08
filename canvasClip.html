@@ -16,7 +16,8 @@
 
 <body>
   <input type="file" id="fileCtrl" accept="image/*">
-  <button id="clip">裁剪1</button>
+  <button id="clip">裁剪</button>
+  <button id="rotate">旋转</button>
   <img src="" id="preview" alt="" style="display:block">
   <div id="previewContainer"></div>
   <script type="text/javascript">
@@ -32,6 +33,9 @@
     c.clip();
     preview.src = c.ret64;
   }, false);
+  rotate.addEventListener('click', function() {
+    c.rotate();
+  }, false)
   </script>
 </body>
 

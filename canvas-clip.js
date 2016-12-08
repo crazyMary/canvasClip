@@ -1,5 +1,17 @@
 (function(global) {
   var bind, isMobile, _self, CanvasClip;
+  var cutRect = {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0
+  };
+  var clipedDownPoint = {
+    x: 0,
+    y: 0,
+    originalRectX: 0,
+    originalRectY: 0,
+  };
 
   bind = (function() {
     if (window.addEventListener) {
@@ -42,6 +54,7 @@
     this.img = new Image;
     /*canvasPosition*/
     this.canvasPosition = {};
+    // this.rotateCount = 0;
 
 
     /*flag for checking mousedown,mousemove,mouseup-clip action*/
@@ -49,7 +62,6 @@
     this._isMouseMoved = false;
     this._isCliped = false;
     this._isRectChanged = false;
-
 
     _self = this;
     /*init: drawImage && makeClip*/
@@ -63,10 +75,12 @@
       _self.img.src = this.result;
 
       _self.img.onload = function() {
+
         _self.canvas.width = _self.canvasWidth;
         _self.canvas.height = _self.img.height * _self.canvas.width / _self.img.width;
         drawMaskImage();
         makeClip();
+
         if (_self.previewContainer.hasChildNodes()) {
           _self.previewContainer.removeChild(_self.canvas);
         }
@@ -79,23 +93,31 @@
   }
 
   CanvasClip.prototype.clip = function() {
-    var offCanvas = document.createElement('canvas'),
-      offContext = offCanvas.getContext('2d'),
-      w = _self.cutRect.width,
-      h = _self.cutRect.height;
+    if (_self._isCliped) {
+      var offCanvas = document.createElement('canvas'),
+        offContext = offCanvas.getContext('2d'),
+        w = _self.cutRect.width,
+        h = _self.cutRect.height;
 
-    offCanvas.width = w;
-    offCanvas.height = h;
-    offContext.drawImage(_self.canvas, _self.cutRect.x, _self.cutRect.y, w, h, 0, 0, w, h);
+      offCanvas.width = w;
+      offCanvas.height = h;
 
-    /*transform cliped-image to base64*/
-    _self.ret64 = offCanvas.toDataURL('image/jpeg', _self.quality);
-    /*transform base64 to blob*/
-    dataURLtoBlob();
+      offContext.drawImage(_self.canvas, _self.cutRect.x, _self.cutRect.y, w, h, 0, 0, w, h);
+      /*transform cliped-image to base64*/
+      _self.ret64 = offCanvas.toDataURL('image/jpeg', _self.quality);
+      /*transform base64 to blob*/
+      dataURLtoBlob();
 
-    drawMaskImage();
-    _self._isCliped = false;
+      drawMaskImage();
+      _self._isCliped = false;
+    }
   }
+
+  // CanvasClip.prototype.rotate = function() {
+  //   var degree = (++_self.rotateCount % 4) * 90;
+  //   _self.canvas.style.transform = 'rotate(' + degree + 'deg)'
+  //   _self._isCliped = false;
+  // };
 
   function dataURLtoBlob() {
     var binaryString = atob(_self.ret64.split(',')[1]),
@@ -112,35 +134,45 @@
     });
   }
 
+  function redrawClipedCanvas() {
+    drawMaskImage();
+    drawClipBox();
+  }
 
   function drawMaskImage() {
-    _self.context.drawImage(_self.img, 0, 0, _self.canvas.width, _self.canvas.height);
+    var context = _self.context;
+    var canvasWidth = _self.canvas.width;
+    var canvasHeight = _self.canvas.height;
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+    // draw image
+    context.drawImage(_self.img, 0, 0, canvasWidth, canvasHeight);
+
     // draw mask
-    _self.context.save();
-    _self.context.fillStyle = 'rgba(0,0,0,.4)';
-    _self.context.beginPath();
-    _self.context.fillRect(0, 0, _self.canvas.width, _self.canvas.height);
-    _self.context.restore();
+    context.save();
+    context.fillStyle = 'rgba(0,0,0,.4)';
+    context.beginPath();
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+    context.restore();
 
     _self.canvasPosition = _self.canvas.getBoundingClientRect();
+  }
 
+  function drawClipBox() {
+    var context = _self.context;
+    context.save();
+    context.strokeStyle = 'red';
+    context.setLineDash([4, 4]);
+    context.lineDashOffset = 10;
+    context.lineWidth = _self.clipLineWidth;
+    context.beginPath();
+    context.rect(cutRect.x, cutRect.y, cutRect.width, cutRect.height);
+    context.clip();
+    context.drawImage(_self.img, 0, 0, _self.canvas.width, _self.canvas.height);
+    context.stroke();
+    context.restore();
   }
 
   function makeClip() {
-
-    var cutRect = {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    };
-    var clipedDownPoint = {
-      x: 0,
-      y: 0,
-      originalRectX: 0,
-      originalRectY: 0,
-    };
-
     if (isMobile) {
       bind(_self.canvas, 'touchstart', touchDownHandler);
       bind(document, 'touchmove', touchMoveHandler);
@@ -150,35 +182,8 @@
       bind(document, 'mousemove', touchMoveHandler);
       bind(document, 'mouseup', touchUpHandler);
     }
-    /*check if mousedown in cliped-box*/
-    function isInRect(x, y) {
-      var beginX = cutRect.x,
-        endX = cutRect.x + cutRect.width,
-        beginY = cutRect.y,
-        endY = cutRect.y + cutRect.height;
-      return (beginX < x) && (x < endX) && (beginY < y) && (y < endY);
-    }
 
-
-    function drawClipBox(e) {
-      if (_self._isRectChanged) { //change clip-box size when clip not exists
-        var p = getCordinate(e);
-        cutRect.width = p.x - cutRect.x;
-        cutRect.height = p.y - cutRect.y;
-      }
-      _self.context.save();
-      _self.context.strokeStyle = 'red';
-      _self.context.setLineDash([4, 4]);
-      _self.context.lineDashOffset = 10;
-      _self.context.lineWidth = _self.clipLineWidth;
-      _self.context.beginPath();
-      _self.context.rect(cutRect.x, cutRect.y, cutRect.width, cutRect.height);
-      _self.context.clip();
-      _self.context.drawImage(_self.img, 0, 0, _self.canvas.width, _self.canvas.height);
-      _self.context.stroke();
-      _self.context.restore();
-    }
-
+    // get point for PC and Mobile
     var getCordinate = (function() {
       if (isMobile) {
         return function(e) {
@@ -197,68 +202,59 @@
       }
     })();
 
+    /*check if mousedown in cliped-box*/
+    function isInRect(x, y) {
+      var beginX = cutRect.x,
+        endX = cutRect.x + cutRect.width,
+        beginY = cutRect.y,
+        endY = cutRect.y + cutRect.height;
+      return (beginX < x) && (x < endX) && (beginY < y) && (y < endY);
+    }
+
+
     function touchDownHandler(e) {
-      e.preventDefault();
-      var p = getCordinate(e);
-      var x = p.x;
-      var y = p.y;
+
+      var p = getCordinate(e),
+        x = p.x,
+        y = p.y;
       if (!_self._isCliped) { //to clip
         cutRect.x = x;
         cutRect.y = y;
         _self._isMouseDown = true;
-      } else {
-        if (isInRect(x, y)) { //to move cliprect
-          clipedDownPoint.x = x;
-          clipedDownPoint.y = y;
-          clipedDownPoint.originalRectX = cutRect.x; // store the original clip info(x)
-          clipedDownPoint.originalRectY = cutRect.y; // store the original clip info(y)
-          _self._isMouseDown = true;
-        } else { //redraw canvas
-          drawMaskImage();
-          _self._isCliped = false;
-        }
+      } else if (isInRect(x, y)) { //to move cliprect
+        clipedDownPoint.x = x;
+        clipedDownPoint.y = y;
+        clipedDownPoint.originalRectX = cutRect.x; // store the original clip info(x)
+        clipedDownPoint.originalRectY = cutRect.y; // store the original clip info(y)
+        _self._isMouseDown = true;
+      } else { //redraw canvas
+        drawMaskImage();
+        _self._isCliped = false;
       }
-    }
-
-    function redrawClipedCanvas(e) {
-      /*reset canvas*/
-      _self.context.clearRect(0, 0, _self.canvas.width, _self.canvas.height);
-      drawMaskImage();
-
-      /*draw clipBox*/
-      drawClipBox(e);
+      e.preventDefault();
     }
 
     function touchMoveHandler(e) {
-      e.preventDefault();
       var target = isMobile ? document.elementFromPoint(e.touches[0].pageX, e.touches[0].pageY) : e.target; // mobile touchmove target not change
-      if (target === _self.canvas) {
-        if (_self._isMouseDown) {
-          _self._isMouseMoved = true;
-          if (!_self._isCliped) {
-            _self._isRectChanged = true;
-            redrawClipedCanvas(e);
-          } else {
-            _self._isRectChanged = false;
-            var p = getCordinate(e);
-            /*draw clipBox*/
-            cutRect.x = clipedDownPoint.originalRectX + p.x - clipedDownPoint.x;
-            cutRect.y = clipedDownPoint.originalRectY + p.y - clipedDownPoint.y;
-
-            if (cutRect.x < 0) {
-              cutRect.x = 0
-            }
-            if (cutRect.x > _self.canvas.width - cutRect.width) {
-              cutRect.x = _self.canvas.width - cutRect.width;
-            }
-            if (cutRect.y < 0) {
-              cutRect.y = 0
-            }
-            if (cutRect.y > _self.canvas.height - cutRect.height) {
-              cutRect.y = _self.canvas.height - cutRect.height;
-            }
-            redrawClipedCanvas(e);
-          }
+      if (target === _self.canvas && _self._isMouseDown) {
+        _self._isMouseMoved = true;
+        if (!_self._isCliped) {
+          _self._isRectChanged = true;
+          var p = getCordinate(e);
+          cutRect.width = p.x - cutRect.x;
+          cutRect.height = p.y - cutRect.y;
+          redrawClipedCanvas();
+        } else {
+          _self._isRectChanged = false;
+          /*draw clipBox*/
+          var p = getCordinate(e);
+          cutRect.x = clipedDownPoint.originalRectX + p.x - clipedDownPoint.x;
+          cutRect.y = clipedDownPoint.originalRectY + p.y - clipedDownPoint.y;
+          (cutRect.x < 0) && (cutRect.x = 0);
+          (cutRect.y < 0) && (cutRect.y = 0);
+          (cutRect.x > _self.canvas.width - cutRect.width) && (cutRect.x = _self.canvas.width - cutRect.width);
+          (cutRect.y > _self.canvas.height - cutRect.height) && (cutRect.y = _self.canvas.height - cutRect.height);
+          redrawClipedCanvas();
         }
       }
     }
