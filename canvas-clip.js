@@ -54,7 +54,6 @@
     this.img = new Image;
     /*canvasPosition*/
     this.canvasPosition = {};
-    // this.rotateCount = 0;
 
 
     /*flag for checking mousedown,mousemove,mouseup-clip action*/
@@ -113,11 +112,6 @@
     }
   }
 
-  // CanvasClip.prototype.rotate = function() {
-  //   var degree = (++_self.rotateCount % 4) * 90;
-  //   _self.canvas.style.transform = 'rotate(' + degree + 'deg)'
-  //   _self._isCliped = false;
-  // };
 
   function dataURLtoBlob() {
     var binaryString = atob(_self.ret64.split(',')[1]),
@@ -213,7 +207,6 @@
 
 
     function touchDownHandler(e) {
-
       var p = getCordinate(e),
         x = p.x,
         y = p.y;
@@ -221,46 +214,67 @@
         cutRect.x = x;
         cutRect.y = y;
         _self._isMouseDown = true;
-      } else if (isInRect(x, y)) { //to move cliprect
-        clipedDownPoint.x = x;
-        clipedDownPoint.y = y;
-        clipedDownPoint.originalRectX = cutRect.x; // store the original clip info(x)
-        clipedDownPoint.originalRectY = cutRect.y; // store the original clip info(y)
-        _self._isMouseDown = true;
-      } else { //redraw canvas
-        drawMaskImage();
-        _self._isCliped = false;
+      } else { //to move cliprect
+        if (isInRect(x, y)) {
+          clipedDownPoint.x = x;
+          clipedDownPoint.y = y;
+          clipedDownPoint.originalRectX = cutRect.x; // store the original clip info(x)
+          clipedDownPoint.originalRectY = cutRect.y; // store the original clip info(y)
+          _self._isMouseDown = true;
+        } else { //redraw canvas
+          drawMaskImage();
+          _self._isCliped = false;
+        }
       }
       e.preventDefault();
     }
 
     function touchMoveHandler(e) {
+
       var target = isMobile ? document.elementFromPoint(e.touches[0].pageX, e.touches[0].pageY) : e.target; // mobile touchmove target not change
-      if (target === _self.canvas && _self._isMouseDown) {
-        _self._isMouseMoved = true;
-        if (!_self._isCliped) {
-          _self._isRectChanged = true;
-          var p = getCordinate(e);
-          cutRect.width = p.x - cutRect.x;
-          cutRect.height = p.y - cutRect.y;
-          redrawClipedCanvas();
-        } else {
-          _self._isRectChanged = false;
-          /*draw clipBox*/
-          var p = getCordinate(e);
-          cutRect.x = clipedDownPoint.originalRectX + p.x - clipedDownPoint.x;
-          cutRect.y = clipedDownPoint.originalRectY + p.y - clipedDownPoint.y;
-          (cutRect.x < 0) && (cutRect.x = 0);
-          (cutRect.y < 0) && (cutRect.y = 0);
-          (cutRect.x > _self.canvas.width - cutRect.width) && (cutRect.x = _self.canvas.width - cutRect.width);
-          (cutRect.y > _self.canvas.height - cutRect.height) && (cutRect.y = _self.canvas.height - cutRect.height);
-          redrawClipedCanvas();
+      if (target === _self.canvas) {
+        if (_self._isMouseDown) {
+          _self._isMouseMoved = true;
+          if (!_self._isCliped) {
+            _self._isRectChanged = true;
+            var p = getCordinate(e);
+            cutRect.width = p.x - cutRect.x;
+            cutRect.height = p.y - cutRect.y;
+            redrawClipedCanvas();
+          } else {
+            _self._isRectChanged = false;
+            /*draw clipBox*/
+            var p = getCordinate(e);
+            cutRect.x = clipedDownPoint.originalRectX + p.x - clipedDownPoint.x;
+            cutRect.y = clipedDownPoint.originalRectY + p.y - clipedDownPoint.y;
+            (cutRect.x < 0) && (cutRect.x = 0);
+            (cutRect.y < 0) && (cutRect.y = 0);
+            (cutRect.x > _self.canvas.width - cutRect.width) && (cutRect.x = _self.canvas.width - cutRect.width);
+            (cutRect.y > _self.canvas.height - cutRect.height) && (cutRect.y = _self.canvas.height - cutRect.height);
+            redrawClipedCanvas();
+          }
+        }
+        addCursor(e)
+      }
+    }
+
+    function addCursor(e) {
+      if (_self._isCliped) {
+        var p = getCordinate(e),
+          x = p.x,
+          y = p.y;
+        if (isInRect(x, y) && _self.canvas.style.cursor !== 'move') {
+          _self.canvas.style.cursor = 'move';
+        }
+        if (!isInRect(x, y) && _self.canvas.style.cursor !== 'default') {
+          _self.canvas.style.cursor = 'default';
         }
       }
     }
 
     function touchUpHandler(e) {
       _self._isMouseDown = false;
+      addCursor(e);
       if (_self._isMouseMoved) {
         _self._isMouseMoved = false;
         _self._isCliped = true;
