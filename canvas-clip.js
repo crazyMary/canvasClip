@@ -138,6 +138,12 @@
     var canvasWidth = _self.canvas.width;
     var canvasHeight = _self.canvas.height;
     context.clearRect(0, 0, canvasWidth, canvasHeight);
+    // draw white bg
+    context.save();
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvasWidth, canvasHeight)
+    context.restore();
+
     // draw image
     context.drawImage(_self.img, 0, 0, canvasWidth, canvasHeight);
 
