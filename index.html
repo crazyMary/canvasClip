@@ -16,29 +16,57 @@
 
 <body>
   <div>
-    <input type="file" accept="image/*" id="fileIpt">
-    <div id="container"></div>
-    <button id="clipBtn">裁减</button>
-    <img src="" id="base64Image" alt="">
-    <img src="" id="fileImage" alt="">
+    <h1>DEMO</h1>
+    <div>
+      <input type="file" accept="image/*" id="fileIpt">
+      <div id="container"></div>
+    </div>
+    <div>
+      <button id="clipBtn">裁减</button>
+    </div>
+    <div>
+      <h2>输出的base64形式</h2>
+      <img src="" id="base64Image" alt="">
+    </div>
+    <div>
+      <h2>读取输出的file形式</h2>
+      <img src="" id="fileImage" alt="">
+    </div>
   </div>
   <script src="./clip.js"></script>
   <script>
   let c = null
   fileIpt.onchange = function() {
-   const sourceFile = this.files[0]
-    const container = document.querySelector('#container')
-    const clipSize = {w:100,h:100,fixed:true}
-    const outPutOpt = {type:'image/webp',quality:.2}
-    c = clip({container,sourceFile,clipSize,outPutOpt})
-  }
-  clipBtn.onclick = function(){
-    c.getClip().then(function(){
-      base64Image.src = c.clip64
 
+    const sourceFile = this.files[0]
+    const container = document.querySelector('#container')
+    const clipSize = {
+      w: 100,
+      h: 100,
+      fixed: true
+    }
+    const outPutOpt = {
+      type: 'image/webp',
+      quality: .2
+    }
+
+    c = clip({
+      container,
+      sourceFile,
+      clipSize,
+      outPutOpt
+    })
+
+  }
+  clipBtn.onclick = function() {
+
+    c.getClip().then(function() {
+      base64Image.src = c.clip64
       fileImage.src = URL.createObjectURL(c.clipBlob)
     })
+
   }
+
   </script>
 </body>
 
