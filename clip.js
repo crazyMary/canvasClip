@@ -1,4 +1,15 @@
-!(function() {
+(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    //AMD
+    define(factory)
+  } else if (typeof exports === 'object') {
+    //Node, CommonJS之类的
+    module.exports = factory()
+  } else {
+    //浏览器全局变量(root 即 window)
+    root.clip = factory()
+  }
+}(this, function() {
 
   'use strict'
   /*
@@ -26,9 +37,9 @@
       h: 100,
       fixed: true
     },
-    outPutOpt:{
-      type:'image/png',
-      quality:.9
+    outPutOpt: {
+      type: 'image/png',
+      quality: .9
     }
   }
 
@@ -287,7 +298,7 @@
         image.onload = () => {
           resolve(image)
         }
-        image.src = board.toDataURL(this.outPutOpt.type,this.outPutOpt.quality)
+        image.src = board.toDataURL(this.outPutOpt.type, this.outPutOpt.quality)
       })
 
     }
@@ -584,6 +595,6 @@
 
   }
 
-  window.clip = clip
+  return clip
 
-})()
+}))

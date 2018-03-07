@@ -25,12 +25,16 @@
       <button id="clipBtn">裁减</button>
     </div>
     <div>
-      <h2>输出的base64形式</h2>
+      <h2>base64形式输出</h2>
       <img src="" id="base64Image" alt="">
     </div>
     <div>
-      <h2>读取输出的file形式</h2>
+      <h2>file转本地连接输出</h2>
       <img src="" id="fileImage" alt="">
+    </div>
+    <div>
+      <h2>arrayBuffer转本地连接输出</h2>
+      <img src="" id="abImage" alt="">
     </div>
   </div>
   <script src="./clip.js"></script>
@@ -63,6 +67,11 @@
     c.getClip().then(function() {
       base64Image.src = c.clip64
       fileImage.src = URL.createObjectURL(c.clipBlob)
+
+      const dv = new Uint8Array(c.clipArrayBuffer)
+      const blob = new Blob([dv],{type:'image/png'})
+      abImage.src = URL.createObjectURL(blob)
+
     })
 
   }
