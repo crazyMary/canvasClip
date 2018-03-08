@@ -46,7 +46,7 @@
   /*
    *resize元素的缓冲空间
    */
-  const buffer = 16
+  const buffer = 8
 
   class Clip {
 
@@ -414,9 +414,9 @@
 
       function createSpan(id) {
         const span = document.createElement('span')
-        const css = `position:absolute;width:${2*buffer}px;height:${2*buffer}px;z-index:2;user-select:none`
+        const css = `position:absolute;width:${2*buffer}px;height:${2*buffer}px;z-index:2;user-select:none;background-color:#258be2;border-radius:50%`
         switch (id) {
-          case 'ltSPAN':
+          case 'lbSPAN':
             {
               span.style.cssText = `${css};left:${-buffer}px;top:${-buffer}px;cursor:nw-resize`
               break
