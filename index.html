@@ -51,14 +51,16 @@
     }
     const outPutOpt = {
       type: 'image/webp',
-      quality: .2
+      quality: .9
     }
+    const showType = 'COVER'
 
     c = clip({
       container,
       sourceFile,
       clipSize,
-      outPutOpt
+      outPutOpt,
+      showType
     })
 
   }

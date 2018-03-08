@@ -3,7 +3,7 @@
     //AMD
     define(factory)
   } else if (typeof exports === 'object') {
-    //Node, CommonJS之类的
+    //CommonJS
     module.exports = factory()
   } else {
     //浏览器全局变量(root 即 window)
@@ -287,7 +287,7 @@
       const board = this._board
       board.width = boardWidth
       board.height = boardHeight
-      board.style.cssText = `transform:translate(${x}px,${y}px)`
+      board.style.cssText = `transform:translate3d(${x}px,${y}px,0);will-change:transform`
 
       this._setPosRange()
 
@@ -298,7 +298,7 @@
         image.onload = () => {
           resolve(image)
         }
-        image.src = board.toDataURL(this.outPutOpt.type, this.outPutOpt.quality)
+        image.src = board.toDataURL('image/png',1)
       })
 
     }
@@ -348,7 +348,7 @@
         if (y < posRange.y[0]) y = posRange.y[0]
         if (y > posRange.y[1]) y = posRange.y[1]
 
-        this._board.style.cssText = `transform:translate(${x}px,${y}px)`
+        this._board.style.cssText = `transform:translate3d(${x}px,${y}px,0);will-change:transform`
         clipRectPos.x = x
         clipRectPos.y = y
 
@@ -549,7 +549,7 @@
 
     async getClip() {
 
-      this.clip64 = this._clipRect.toDataURL('image/png')
+      this.clip64 = this._clipRect.toDataURL(this.outPutOpt.type,this.outPutOpt.quality)
 
       const binary = await this._outPutBinary()
       this.clipBlob = binary.blob
