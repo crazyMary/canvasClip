@@ -43,6 +43,8 @@
     }
   }
 
+  const lineCount = 3
+
   /*
    *resize元素的缓冲空间
    */
@@ -144,6 +146,14 @@
       }
 
       /*
+       *原图裁剪位置
+       */
+      this._srcPos = {
+        x:0,
+        y:0
+      }
+
+      /*
        *是否点击canvas,否则不触发move事件
        */
       this._isMouseDown = false
@@ -199,6 +209,7 @@
        *绘制裁剪canvas
        */
       this._drawClip()
+      this._drawClipMask()
 
       /*
        *添加裁剪canvas
@@ -298,7 +309,7 @@
         image.onload = () => {
           resolve(image)
         }
-        image.src = board.toDataURL('image/png',1)
+        image.src = board.toDataURL('image/png')
       })
 
     }
@@ -388,22 +399,57 @@
       const top = (containerHeight - clipHeight) / 2
 
       const board = this._board
-      const srcLeft = left - this._clipRectPos.x
-      const srcTop = top - this._clipRectPos.y
 
       const clipRect = this._clipRect
       const clipCtx = this._clipCtx
+
+      this._srcPos.x = left - this._clipRectPos.x
+      this._srcPos.y = top - this._clipRectPos.y
 
       clipCtx.clearRect(0, 0, containerWidth, containerHeight)
 
       clipRect.width = clipWidth
       clipRect.height = clipHeight
 
-      clipCtx.drawImage(this._boardImage, srcLeft, srcTop, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
+      clipCtx.drawImage(this._boardImage, this._srcPos.x, this._srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
 
       this._clipContainer.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${clipWidth}px;height:${clipHeight}px;z-index:1`
 
       this._setPosRange()
+
+
+    }
+
+    _drawClipMask() {
+      const clipCtx = this._clipCtx
+      const clipWidth = this._clipRect.width
+      const clipHeight = this._clipRect.height
+
+      clipCtx.strokeStyle = '#fff'
+
+      for (let i = 0; i < 2; i++) {
+        for (let j = 0; j <= lineCount; j++) {
+          let moveX, moveY, lineX, lineY, lw
+          if (i == 0) {
+            lineY = moveX = 0
+            moveY = clipWidth * j / lineCount
+            lineX = clipWidth
+          } else if (i == 1) {
+            moveX = clipHeight * j / lineCount
+            lineX = moveY = 0
+            lineY = clipHeight
+          }
+          lw = (i == 0 && j == 0 || i == 0 && j == lineCount || i == 1 && j == 0 || i == 1 && j == lineCount) ? 4 : 1
+          clipCtx.save()
+          clipCtx.lineWidth = lw
+          clipCtx.translate(moveX, moveY)
+          clipCtx.beginPath()
+          clipCtx.moveTo(0, 0)
+          clipCtx.lineTo(lineX, lineY)
+          clipCtx.stroke()
+          clipCtx.restore()
+        }
+      }
 
     }
 
@@ -533,6 +579,7 @@
         clipSize.h = clipSize.h <= 2 * buffer ? 2 * buffer : clipSize.h
 
         this._drawClip()
+        this._drawClipMask()
 
       }
 
@@ -549,7 +596,18 @@
 
     async getClip() {
 
-      this.clip64 = this._clipRect.toDataURL(this.outPutOpt.type,this.outPutOpt.quality)
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const clipSize = this.clipSize
+      const clipWidth = clipSize.w
+      const clipHeight = clipSize.h
+
+      canvas.width = clipWidth
+      canvas.height = clipHeight
+
+      ctx.drawImage(this._boardImage, this._srcPos.x, this._srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
+
+      this.clip64 = canvas.toDataURL(this.outPutOpt.type, this.outPutOpt.quality)
 
       const binary = await this._outPutBinary()
       this.clipBlob = binary.blob
