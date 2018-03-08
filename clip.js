@@ -460,26 +460,26 @@
 
       function createSpan(id) {
         const span = document.createElement('span')
-        const css = `position:absolute;width:${2*buffer}px;height:${2*buffer}px;z-index:2;user-select:none;background-color:#258be2;border-radius:50%`
+        const css = `position:absolute;width:${2*buffer}px;height:${2*buffer}px;z-index:2;user-select:none;border:4px solid #fff`
         switch (id) {
           case 'lbSPAN':
             {
-              span.style.cssText = `${css};left:${-buffer}px;top:${-buffer}px;cursor:nw-resize`
+              span.style.cssText = `${css};left:${-buffer}px;top:${-buffer}px;cursor:nw-resize;border-right-width:0;border-bottom-width:0`
               break
             }
           case 'ltSPAN':
             {
-              span.style.cssText = `${css};left:${-buffer}px;bottom:${-buffer}px;cursor:sw-resize`
+              span.style.cssText = `${css};left:${-buffer}px;bottom:${-buffer}px;cursor:sw-resize;border-right-width:0;border-top-width:0`
               break
             }
           case 'rtSPAN':
             {
-              span.style.cssText = `${css};right:${-buffer}px;top:${-buffer}px;cursor:ne-resize`
+              span.style.cssText = `${css};right:${-buffer}px;top:${-buffer}px;cursor:ne-resize;border-left-width:0;border-bottom-width:0`
               break
             }
           case 'rbSPAN':
             {
-              span.style.cssText = `${css};right:${-buffer}px;bottom:${-buffer}px;cursor:se-resize`
+              span.style.cssText = `${css};right:${-buffer}px;bottom:${-buffer}px;cursor:se-resize;border-left-width:0;border-top-width:0`
               break
             }
         }
