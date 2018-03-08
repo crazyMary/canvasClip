@@ -301,7 +301,6 @@
       board.style.cssText = `transform:translate3d(${x}px,${y}px,0);will-change:transform`
 
       this._setPosRange()
-
       this._ctx.drawImage(sourceImg, 0, 0, sourceImg.width, sourceImg.height, 0, 0, boardWidth, boardHeight)
 
       return new Promise((resolve, reject) => {
@@ -321,6 +320,8 @@
 
       ctx.fillStyle = maskBgColor
       ctx.fillRect(0, 0, board.width, board.height)
+
+
 
     }
 
