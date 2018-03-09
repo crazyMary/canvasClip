@@ -38,12 +38,20 @@
     }
   }
 
+  /*
+   *裁剪框线数
+   */
   const lineCount = 3
+
+  /*
+   *移动端判断
+   */
+  const isMobile = 'ontouchmove' in document.createElement('span')
 
   /*
    *resize元素的缓冲空间
    */
-  const buffer = 8
+  const buffer = isMobile ? 20 : 8
 
   class Clip {
 
@@ -103,7 +111,7 @@
         w: 100,
         h: 100,
         max: 0,
-        min: 2 * buffer
+        min: 4 * buffer
       }
 
       /*
@@ -294,17 +302,17 @@
       if (this.showType === SHOW_TYPE.CONTAIN) {
         if (imgRatio >= boxRatio) {
           strategyA()
-          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardHeight
+          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardHeight < containerWidth ? boardHeight : containerWidth
         } else {
           strategyB()
-          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardWidth
+          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardWidth < containerHeight ? boardWidth : containerHeight
         }
 
       } else if (this.showType === SHOW_TYPE.COVER) {
-        if(imgRatio >= boxRatio){
+        if (imgRatio >= boxRatio) {
           strategyB()
           this._clipSize.max = boardHeight
-        }else{
+        } else {
           strategyA()
           this._clipSize.max = boardWidth
         }
@@ -351,6 +359,10 @@
       document.addEventListener('mousemove', this._move.bind(this), false)
       document.addEventListener('mouseup', this._up.bind(this), false)
 
+      this._board.addEventListener('touchstart', this._down.bind(this), false)
+      document.addEventListener('touchmove', this._move.bind(this), false)
+      document.addEventListener('touchend', this._up.bind(this), false)
+
     }
 
     _down(e) {
@@ -362,6 +374,8 @@
       this._downClipSize.h = this._clipSize.h
 
       this._isMouseDown = true
+
+      e.preventDefault()
 
     }
 
@@ -386,6 +400,8 @@
 
         this._drawClip()
         this._drawClipMask()
+
+        e.preventDefault()
       }
 
     }
@@ -405,6 +421,9 @@
 
       document.removeEventListener('mousemove', this._move)
       document.removeEventListener('mouseup', this._up)
+
+      document.removeEventListener('touchmove', this._move)
+      document.removeEventListener('touchend', this._up)
 
     }
 
@@ -441,7 +460,6 @@
       clipContainer.classList.add('clipContainer')
 
       this._setPosRange()
-
 
     }
 
@@ -519,6 +537,9 @@
       clipContainer.addEventListener('mousedown', this._down.bind(this), false)
       clipContainer.addEventListener('mousedown', this._bindClipEvent.bind(this), false)
 
+      clipContainer.addEventListener('touchstart', this._down.bind(this), false)
+      clipContainer.addEventListener('touchstart', this._bindClipEvent.bind(this), false)
+
       clipContainer.appendChild(canvas)
       this.container.appendChild(clipContainer)
     }
@@ -530,11 +551,15 @@
       document.addEventListener('mousemove', this._clipRectResize.bind(this), false)
       document.addEventListener('mouseup', this._clipRectUp.bind(this), false)
 
+      document.addEventListener('touchmove', this._clipRectResize.bind(this), false)
+      document.addEventListener('touchend', this._clipRectUp.bind(this), false)
+
+      e.preventDefault()
     }
 
     _clipRectResize(e) {
 
-      if (this._isMouseDown&&this._resizeTarget) {
+      if (this._isMouseDown && this._resizeTarget) {
 
         const clipRect = this._clipRect
 
@@ -564,7 +589,10 @@
         this._drawClip()
         this._drawClipMask()
 
+        e.preventDefault()
+
       }
+
 
     }
 
@@ -574,6 +602,9 @@
 
       document.removeEventListener('mousemove', this._clipRectResize)
       document.removeEventListener('mouseup', this._clipRectUp)
+
+      document.removeEventListener('touchmove', this._clipRectResize)
+      document.removeEventListener('touchend', this._clipRectUp)
 
     }
 
@@ -628,7 +659,7 @@
 
     }
 
-    reset(){
+    reset() {
       this._clipSize = {
         w: 100,
         h: 100,

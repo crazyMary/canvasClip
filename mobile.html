@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=750,user-scalable=no">
+  <title>demo</title>
+  <link rel="stylesheet" type="text/css" href="./clip.css">
+  <style type="text/css">
+  *{
+    box-sizing: border-box
+  }
+  body{
+    margin: 0;
+  }
+  #container {
+    width: 100vw;
+    height: 100vh;
+    /*border: 2px solid red;*/
+  }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>DEMO</h1>
+    <div>
+      <input type="file" accept="image/*" id="fileIpt">
+      <div id="container"></div>
+    </div>
+    <div>
+      <button id="clipBtn">裁减</button>
+      <button id="resetBtn">还原</button>
+    </div>
+    <div>
+      <h2>base64形式输出</h2>
+      <img src="" id="base64Image" alt="">
+    </div>
+    <div>
+      <h2>file转本地连接输出</h2>
+      <img src="" id="fileImage" alt="">
+    </div>
+    <div>
+      <h2>arrayBuffer转本地连接输出</h2>
+      <img src="" id="abImage" alt="">
+    </div>
+  </div>
+  <script src="./clip.js"></script>
+  <script>
+  let c = null
+  fileIpt.onchange = function() {
+
+    const sourceFile = this.files[0]
+    const container = document.querySelector('#container')
+    const outPutOpt = {
+      type: 'image/webp',
+      quality: 1
+    }
+
+    c = clip({
+      container,
+      sourceFile,
+      outPutOpt,
+      // showType:'COVER'
+    })
+
+  }
+  resetBtn.onclick = function(){
+    c.reset()
+  }
+  clipBtn.onclick = function() {
+
+    c.getClip().then(function() {
+      base64Image.src = c.clip64
+      fileImage.src = URL.createObjectURL(c.clipBlob)
+
+      const dv = new Uint8Array(c.clipArrayBuffer)
+      const blob = new Blob([dv],{type:'image/png'})
+      abImage.src = URL.createObjectURL(blob)
+
+    })
+
+  }
+
+  </script>
+</body>
+
+</html>
