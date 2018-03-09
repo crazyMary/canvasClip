@@ -486,25 +486,26 @@
       function createSpan(id) {
         const span = document.createElement('span')
         const css = `width:${2*buffer}px;height:${2*buffer}px;z-index:2`
+        const space = -4
         switch (id) {
           case 'lbSPAN':
             {
-              span.style.cssText = `${css};left:${-buffer}px;top:${-buffer}px;`
+              span.style.cssText = `${css};left:${space}px;top:${space}px;`
               break
             }
           case 'ltSPAN':
             {
-              span.style.cssText = `${css};left:${-buffer}px;bottom:${-buffer}px;`
+              span.style.cssText = `${css};left:${space}px;bottom:${space}px;`
               break
             }
           case 'rtSPAN':
             {
-              span.style.cssText = `${css};right:${-buffer}px;top:${-buffer}px;`
+              span.style.cssText = `${css};right:${space}px;top:${space}px;`
               break
             }
           case 'rbSPAN':
             {
-              span.style.cssText = `${css};right:${-buffer}px;bottom:${-buffer}px;`
+              span.style.cssText = `${css};right:${space}px;bottom:${space}px;`
               break
             }
         }
