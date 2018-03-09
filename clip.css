@@ -1,0 +1,36 @@
+.clipWrap {
+  position: relative;
+  overflow: hidden;
+}
+.clipWrap .imageBoard {
+  will-change: transform;
+}
+.clipWrap .clipContainer {
+  position: absolute;
+  z-index: 1
+}
+.clipWrap .clipContainer span {
+  position: absolute;
+  user-select: none;
+  border: 4px solid #fff
+}
+#lbSPAN {
+  cursor: nw-resize;
+  border-right-width: 0;
+  border-bottom-width: 0
+}
+#ltSPAN {
+  cursor: sw-resize;
+  border-right-width: 0;
+  border-top-width: 0
+}
+#rtSPAN {
+  cursor: ne-resize;
+  border-left-width: 0;
+  border-bottom-width: 0
+}
+#rbSPAN {
+  cursor: se-resize;
+  border-left-width: 0;
+  border-top-width: 0
+}

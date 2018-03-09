@@ -7,11 +7,12 @@
   <style type="text/css">
   #container {
     width: 400px;
-    height: 400px;
-    border: 1px solid blue;
+    height: 300px;
+    border: 2px solid red;
   }
 
   </style>
+  <link rel="stylesheet" type="text/css" href="./clip.css">
 </head>
 
 <body>
@@ -23,6 +24,7 @@
     </div>
     <div>
       <button id="clipBtn">裁减</button>
+      <button id="resetBtn">还原</button>
     </div>
     <div>
       <h2>base64形式输出</h2>
@@ -44,25 +46,21 @@
 
     const sourceFile = this.files[0]
     const container = document.querySelector('#container')
-    const clipSize = {
-      w: 100,
-      h: 100,
-      fixed: true
-    }
     const outPutOpt = {
       type: 'image/webp',
       quality: 1
     }
-    const showType = 'COVER'
 
     c = clip({
       container,
       sourceFile,
-      clipSize,
       outPutOpt,
-      showType
+      showType:'COVER'
     })
 
+  }
+  resetBtn.onclick = function(){
+    c.reset()
   }
   clipBtn.onclick = function() {
 

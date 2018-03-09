@@ -31,12 +31,7 @@
    *默认配置
    */
   const defaultOpt = {
-    showType: 'COVER',
-    clipSize: {
-      w: 100,
-      h: 100,
-      fixed: true
-    },
+    showType: 'CONTAIN',
     outPutOpt: {
       type: 'image/png',
       quality: .9
@@ -75,10 +70,6 @@
        */
       this.showType = opt.showType
 
-      /*
-       *裁减框长宽配置
-       */
-      this.clipSize = opt.clipSize
 
       /*
        *图片输出配置
@@ -104,6 +95,16 @@
       this._clipContainer = document.createElement('div')
       this._clipRect = document.createElement('canvas')
       this._clipCtx = this._clipRect.getContext('2d')
+
+      /*
+       *裁减框长宽配置
+       */
+      this._clipSize = {
+        w: 100,
+        h: 100,
+        max: 0,
+        min: 2 * buffer
+      }
 
       /*
        *源图背景canvas起始位置
@@ -149,8 +150,8 @@
        *原图裁剪位置
        */
       this._srcPos = {
-        x:0,
-        y:0
+        x: 0,
+        y: 0
       }
 
       /*
@@ -177,8 +178,7 @@
       /*
        *初始化container
        */
-      this.container.innerHTML = ''
-      this.container.style.cssText = `position:relative;overflow:hidden;background-color:${maskBgColor}`
+      this._containerInit()
 
       /*
        *获取源图Image对象
@@ -220,6 +220,14 @@
 
     }
 
+    _containerInit() {
+
+      this.container.innerHTML = ''
+      this.container.style.cssText = `background-color:${maskBgColor}`
+      this.container.classList.add('clipWrap')
+
+    }
+
 
     _readImage() {
 
@@ -244,7 +252,7 @@
       const containerWidth = container.clientWidth
       const containerHeight = container.clientHeight
 
-      const clipSize = this.clipSize
+      const clipSize = this._clipSize
 
       const board = this._board
       const boardWidth = board.width
@@ -267,7 +275,7 @@
       const imgRatio = sourceImg.width / sourceImg.height
       let boardWidth, boardHeight, x, y
 
-      const clipSize = this.clipSize
+      const clipSize = this._clipSize
 
       const strategyA = function() {
         boardWidth = containerWidth
@@ -284,9 +292,22 @@
 
 
       if (this.showType === SHOW_TYPE.CONTAIN) {
-        imgRatio >= boxRatio ? strategyA() : strategyB()
+        if (imgRatio >= boxRatio) {
+          strategyA()
+          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardHeight
+        } else {
+          strategyB()
+          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardWidth
+        }
+
       } else if (this.showType === SHOW_TYPE.COVER) {
-        imgRatio >= boxRatio ? strategyB() : strategyA()
+        if(imgRatio >= boxRatio){
+          strategyB()
+          this._clipSize.max = boardHeight
+        }else{
+          strategyA()
+          this._clipSize.max = boardWidth
+        }
       }
 
       this._clipRectPos.x = x
@@ -298,7 +319,8 @@
       const board = this._board
       board.width = boardWidth
       board.height = boardHeight
-      board.style.cssText = `transform:translate3d(${x}px,${y}px,0);will-change:transform`
+      board.classList.add('imageBoard')
+      board.style.cssText = `transform:translate3d(${x}px,${y}px,0)`
 
       this._setPosRange()
       this._ctx.drawImage(sourceImg, 0, 0, sourceImg.width, sourceImg.height, 0, 0, boardWidth, boardHeight)
@@ -321,8 +343,6 @@
       ctx.fillStyle = maskBgColor
       ctx.fillRect(0, 0, board.width, board.height)
 
-
-
     }
 
     _makeMovable() {
@@ -338,8 +358,8 @@
       this._downPoint.x = e.pageX
       this._downPoint.y = e.pageY
 
-      this._downClipSize.w = this.clipSize.w
-      this._downClipSize.h = this.clipSize.h
+      this._downClipSize.w = this._clipSize.w
+      this._downClipSize.h = this._clipSize.h
 
       this._isMouseDown = true
 
@@ -360,11 +380,12 @@
         if (y < posRange.y[0]) y = posRange.y[0]
         if (y > posRange.y[1]) y = posRange.y[1]
 
-        this._board.style.cssText = `transform:translate3d(${x}px,${y}px,0);will-change:transform`
+        this._board.style.cssText = `transform:translate3d(${x}px,${y}px,0)`
         clipRectPos.x = x
         clipRectPos.y = y
 
         this._drawClip()
+        this._drawClipMask()
       }
 
     }
@@ -389,8 +410,8 @@
 
     _drawClip() {
 
-      const clipWidth = this.clipSize.w
-      const clipHeight = this.clipSize.h
+      const clipWidth = this._clipSize.w
+      const clipHeight = this._clipSize.h
 
       const container = this.container
       const containerWidth = container.clientWidth
@@ -400,6 +421,7 @@
       const top = (containerHeight - clipHeight) / 2
 
       const board = this._board
+      const clipContainer = this._clipContainer
 
       const clipRect = this._clipRect
       const clipCtx = this._clipCtx
@@ -412,9 +434,11 @@
       clipRect.width = clipWidth
       clipRect.height = clipHeight
 
+
       clipCtx.drawImage(this._boardImage, this._srcPos.x, this._srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
 
-      this._clipContainer.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${clipWidth}px;height:${clipHeight}px;z-index:1`
+      clipContainer.style.cssText = `left:${left}px;top:${top}px;width:${clipWidth}px;height:${clipHeight}px;`
+      clipContainer.classList.add('clipContainer')
 
       this._setPosRange()
 
@@ -461,26 +485,26 @@
 
       function createSpan(id) {
         const span = document.createElement('span')
-        const css = `position:absolute;width:${2*buffer}px;height:${2*buffer}px;z-index:2;user-select:none;border:4px solid #fff`
+        const css = `width:${2*buffer}px;height:${2*buffer}px;z-index:2`
         switch (id) {
           case 'lbSPAN':
             {
-              span.style.cssText = `${css};left:${-buffer}px;top:${-buffer}px;cursor:nw-resize;border-right-width:0;border-bottom-width:0`
+              span.style.cssText = `${css};left:${-buffer}px;top:${-buffer}px;`
               break
             }
           case 'ltSPAN':
             {
-              span.style.cssText = `${css};left:${-buffer}px;bottom:${-buffer}px;cursor:sw-resize;border-right-width:0;border-top-width:0`
+              span.style.cssText = `${css};left:${-buffer}px;bottom:${-buffer}px;`
               break
             }
           case 'rtSPAN':
             {
-              span.style.cssText = `${css};right:${-buffer}px;top:${-buffer}px;cursor:ne-resize;border-left-width:0;border-bottom-width:0`
+              span.style.cssText = `${css};right:${-buffer}px;top:${-buffer}px;`
               break
             }
           case 'rbSPAN':
             {
-              span.style.cssText = `${css};right:${-buffer}px;bottom:${-buffer}px;cursor:se-resize;border-left-width:0;border-top-width:0`
+              span.style.cssText = `${css};right:${-buffer}px;bottom:${-buffer}px;`
               break
             }
         }
@@ -502,14 +526,14 @@
 
       this._resizeTarget = e.target.id
 
-      document.addEventListener('mousemove', this._clipRectMove.bind(this), false)
+      document.addEventListener('mousemove', this._clipRectResize.bind(this), false)
       document.addEventListener('mouseup', this._clipRectUp.bind(this), false)
 
     }
 
-    _clipRectMove(e) {
+    _clipRectResize(e) {
 
-      if (this._isMouseDown) {
+      if (this._isMouseDown&&this._resizeTarget) {
 
         const clipRect = this._clipRect
 
@@ -522,62 +546,19 @@
         const clipH = clipRect.height
 
         const downClipSize = this._downClipSize
-        const clipSize = this.clipSize
+        const clipSize = this._clipSize
 
-        function fixedClipSizeHeight() {
-          clipSize.h = clipSize.w * downClipSize.h / downClipSize.w
+        if (this._resizeTarget == 'ltSPAN' || this._resizeTarget == 'lbSPAN') {
+          clipSize.w = clipSize.h = downClipSize.w - disX
+        } else {
+          clipSize.w = clipSize.h = downClipSize.w + disX
         }
 
-        switch (this._resizeTarget) {
-
-          case 'ltSPAN':
-            {
-              clipSize.w = downClipSize.w - disX
-              if (clipSize.fixed) {
-                fixedClipSizeHeight()
-              } else {
-                clipSize.h = downClipSize.h - disY
-              }
-              break
-            }
-
-          case 'lbSPAN':
-            {
-              clipSize.w = downClipSize.w - disX
-              if (clipSize.fixed) {
-                fixedClipSizeHeight()
-              } else {
-                clipSize.h = downClipSize.h + disY
-              }
-              break
-            }
-
-          case 'rtSPAN':
-            {
-              clipSize.w = downClipSize.w + disX
-              if (clipSize.fixed) {
-                fixedClipSizeHeight()
-              } else {
-                clipSize.h = downClipSize.h - disY
-              }
-              break
-            }
-
-          case 'rbSPAN':
-            {
-              clipSize.w = downClipSize.w + disX
-              if (clipSize.fixed) {
-                fixedClipSizeHeight()
-              } else {
-                clipSize.h = downClipSize.h + disY
-              }
-              break
-            }
-
+        if (clipSize.w < clipSize.min || clipSize.h < clipSize.min) {
+          clipSize.w = clipSize.h = clipSize.min
+        } else if (clipSize.w > clipSize.max || clipSize.h > clipSize.max) {
+          clipSize.w = clipSize.h = clipSize.max
         }
-
-        clipSize.w = clipSize.w <= 2 * buffer ? 2 * buffer : clipSize.w
-        clipSize.h = clipSize.h <= 2 * buffer ? 2 * buffer : clipSize.h
 
         this._drawClip()
         this._drawClipMask()
@@ -590,7 +571,7 @@
 
       this._resizeTarget = null
 
-      document.removeEventListener('mousemove', this._clipRectMove)
+      document.removeEventListener('mousemove', this._clipRectResize)
       document.removeEventListener('mouseup', this._clipRectUp)
 
     }
@@ -599,7 +580,7 @@
 
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
-      const clipSize = this.clipSize
+      const clipSize = this._clipSize
       const clipWidth = clipSize.w
       const clipHeight = clipSize.h
 
@@ -644,6 +625,16 @@
 
       })
 
+    }
+
+    reset(){
+      this._clipSize = {
+        w: 100,
+        h: 100,
+        max: 0,
+        min: 2 * buffer
+      }
+      this._init()
     }
 
   }
