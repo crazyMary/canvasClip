@@ -25,6 +25,7 @@
     <div>
       <button id="clipBtn">裁减</button>
       <button id="resetBtn">还原</button>
+      <button id="exportBtn">导出</button>
     </div>
     <div>
       <h2>base64形式输出</h2>
@@ -61,6 +62,9 @@
   }
   resetBtn.onclick = function(){
     c.reset()
+  }
+  exportBtn.onclick = function(){
+    c.exportImage()
   }
   clipBtn.onclick = function() {
 

@@ -659,6 +659,13 @@
 
     }
 
+    exportImage(){
+      const a = document.createElement('a')
+      a.download = 'clip_image'
+      a.href = this.clip64
+      a.click()
+    }
+
     reset() {
       this._clipSize = {
         w: 100,
