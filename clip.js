@@ -12,12 +12,13 @@
 }(this, function() {
 
   'use strict'
+  const styleText = '.clipWrap {position: relative; overflow: hidden; } .clipWrap .imageBoard {will-change: transform; } .clipWrap .clipContainer {position: absolute; z-index: 1 } .clipWrap .clipContainer span {position: absolute; user-select: none; border: 2px solid #fff } #lbSPAN {cursor: nw-resize; border-right-width: 0; border-bottom-width: 0 } #ltSPAN {cursor: sw-resize; border-right-width: 0; border-top-width: 0 } #rtSPAN {cursor: ne-resize; border-left-width: 0; border-bottom-width: 0 } #rbSPAN {cursor: se-resize; border-left-width: 0; border-top-width: 0 } '
   /*
    *源图的显示模式
    *COVER:覆盖模式
    *CONTAIN:包含模式
    */
-  const SHOW_TYPE = {
+  const SHOWTYPE = {
     COVER: 'COVER',
     CONTAIN: 'CONTAIN'
   }
@@ -94,20 +95,20 @@
       /*
        *原图背景canvas
        */
-      this._board = document.createElement('canvas')
-      this._ctx = this._board.getContext('2d')
+      this.__board = document.createElement('canvas')
+      this.__ctx = this.__board.getContext('2d')
 
       /*
        *裁减区域canvas
        */
-      this._clipContainer = document.createElement('div')
-      this._clipRect = document.createElement('canvas')
-      this._clipCtx = this._clipRect.getContext('2d')
+      this.__clipContainer = document.createElement('div')
+      this.__clipRect = document.createElement('canvas')
+      this.__clipCtx = this.__clipRect.getContext('2d')
 
       /*
        *裁减框长宽配置
        */
-      this._clipSize = {
+      this.__clipSize = {
         w: 100,
         h: 100,
         max: 0,
@@ -117,7 +118,7 @@
       /*
        *源图背景canvas起始位置
        */
-      this._startPoint = {
+      this.__startPoint = {
         x: 0,
         y: 0
       }
@@ -125,7 +126,7 @@
       /*
        *移动背景canvas时的点击位置
        */
-      this._downPoint = {
+      this.__downPoint = {
         x: 0,
         y: 0
       }
@@ -133,7 +134,7 @@
       /*
        *背景canvas的可移动x,y范围
        */
-      this._posRange = {
+      this.__posRange = {
         x: [],
         y: []
       }
@@ -141,7 +142,7 @@
       /*
        *背景canvas的坐标位置
        */
-      this._clipRectPos = {
+      this.__clipRectPos = {
         x: 0,
         y: 0
       }
@@ -149,7 +150,7 @@
       /*
        *点击时clip的size
        */
-      this._downClipSize = {
+      this.__downClipSize = {
         w: 0,
         h: 0
       }
@@ -157,7 +158,7 @@
       /*
        *原图裁剪位置
        */
-      this._srcPos = {
+      this.__srcPos = {
         x: 0,
         y: 0
       }
@@ -165,70 +166,86 @@
       /*
        *是否点击canvas,否则不触发move事件
        */
-      this._isMouseDown = false
+      this.__isMouseDown = false
 
       /*
        *是否点击在resize框中
        */
-      this._resizeTarget = null
+      this.__resizeTarget = null
 
 
       /*
        *缓存背景canvas
        *用于绘制裁减canvas
        */
-      this._boardImage = null
+      this.__boardImage = null
 
-      this._init()
+      this.__init()
+      this.__injectStyle()
     }
 
-    async _init() {
+    __injectStyle(){
+
+      const styles = document.querySelectorAll('style')
+      for(let item of styles){
+        if(item.id == 'clipStyle')
+          return
+      }
+      const style = document.createElement('style')
+      style.type = 'text/css'
+      style.id = 'clipStyle'
+      style.innerHTML = styleText
+      document.head.appendChild(style)
+      
+    }
+
+    async __init() {
       /*
        *初始化container
        */
-      this._containerInit()
+      this.__containerInit()
 
       /*
        *获取源图Image对象
        */
-      const sourceImg = await this._readImage()
+      const sourceImg = await this.__readImage()
 
       /*
        *获取背景canvas的Image对象
        */
-      this._boardImage = await this._drawIamge(sourceImg)
+      this.__boardImage = await this.__drawIamge(sourceImg)
 
       /*
        *绘制蒙板
        */
-      this._drawMask()
+      this.__drawMask()
 
       /*
        *背景图canvas可移动
        */
-      this._makeMovable()
+      this.__makeMovable()
 
       /*
        *添加背景图canvas
        */
-      this.container.appendChild(this._board)
+      this.container.appendChild(this.__board)
 
       /*
        *绘制裁剪canvas
        */
-      this._drawClip()
-      this._drawClipMask()
+      this.__drawClip()
+      this.__drawClipMask()
 
       /*
        *添加裁剪canvas
        *make movable
        */
-      this._clipRectInit()
+      this.__clipRectInit()
 
 
     }
 
-    _containerInit() {
+    __containerInit() {
 
       this.container.innerHTML = ''
       this.container.style.cssText = `background-color:${maskBgColor}`
@@ -237,7 +254,7 @@
     }
 
 
-    _readImage() {
+    __readImage() {
 
       return new Promise((resolve, reject) => {
 
@@ -254,26 +271,26 @@
 
     }
 
-    _setPosRange() {
+    __setPosRange() {
 
       const container = this.container
       const containerWidth = container.clientWidth
       const containerHeight = container.clientHeight
 
-      const clipSize = this._clipSize
+      const clipSize = this.__clipSize
 
-      const board = this._board
+      const board = this.__board
       const boardWidth = board.width
       const boardHeight = board.height
 
       const spaceX = (containerWidth - clipSize.w) / 2
       const spaceY = (containerHeight - clipSize.h) / 2
-      this._posRange.x = [-(boardWidth + spaceX - containerWidth), spaceX]
-      this._posRange.y = [-(boardHeight + spaceY - containerHeight), spaceY]
+      this.__posRange.x = [-(boardWidth + spaceX - containerWidth), spaceX]
+      this.__posRange.y = [-(boardHeight + spaceY - containerHeight), spaceY]
 
     }
 
-    _drawIamge(sourceImg) {
+    __drawIamge(sourceImg) {
 
       const container = this.container
       const containerWidth = container.clientWidth
@@ -283,7 +300,7 @@
       const imgRatio = sourceImg.width / sourceImg.height
       let boardWidth, boardHeight, x, y
 
-      const clipSize = this._clipSize
+      const clipSize = this.__clipSize
 
       const strategyA = function() {
         boardWidth = containerWidth
@@ -299,39 +316,39 @@
       }
 
 
-      if (this.showType === SHOW_TYPE.CONTAIN) {
+      if (this.showType === SHOWTYPE.CONTAIN) {
         if (imgRatio >= boxRatio) {
           strategyA()
-          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardHeight < containerWidth ? boardHeight : containerWidth
+          this.__clipSize.w = this.__clipSize.h = this.__clipSize.max = boardHeight < containerWidth ? boardHeight : containerWidth
         } else {
           strategyB()
-          this._clipSize.w = this._clipSize.h = this._clipSize.max = boardWidth < containerHeight ? boardWidth : containerHeight
+          this.__clipSize.w = this.__clipSize.h = this.__clipSize.max = boardWidth < containerHeight ? boardWidth : containerHeight
         }
 
-      } else if (this.showType === SHOW_TYPE.COVER) {
+      } else if (this.showType === SHOWTYPE.COVER) {
         if (imgRatio >= boxRatio) {
           strategyB()
-          this._clipSize.max = boardHeight
+          this.__clipSize.max = boardHeight
         } else {
           strategyA()
-          this._clipSize.max = boardWidth
+          this.__clipSize.max = boardWidth
         }
       }
 
-      this._clipRectPos.x = x
-      this._clipRectPos.y = y
+      this.__clipRectPos.x = x
+      this.__clipRectPos.y = y
 
-      this._startPoint.x = x
-      this._startPoint.y = y
+      this.__startPoint.x = x
+      this.__startPoint.y = y
 
-      const board = this._board
+      const board = this.__board
       board.width = boardWidth
       board.height = boardHeight
       board.classList.add('imageBoard')
       board.style.cssText = `transform:translate3d(${x}px,${y}px,0)`
 
-      this._setPosRange()
-      this._ctx.drawImage(sourceImg, 0, 0, sourceImg.width, sourceImg.height, 0, 0, boardWidth, boardHeight)
+      this.__setPosRange()
+      this.__ctx.drawImage(sourceImg, 0, 0, sourceImg.width, sourceImg.height, 0, 0, boardWidth, boardHeight)
 
       return new Promise((resolve, reject) => {
         const image = new Image
@@ -343,94 +360,94 @@
 
     }
 
-    _drawMask() {
+    __drawMask() {
 
-      const board = this._board
-      const ctx = this._ctx
+      const board = this.__board
+      const ctx = this.__ctx
 
       ctx.fillStyle = maskBgColor
       ctx.fillRect(0, 0, board.width, board.height)
 
     }
 
-    _makeMovable() {
+    __makeMovable() {
 
-      this._board.addEventListener('mousedown', this._down.bind(this), false)
-      document.addEventListener('mousemove', this._move.bind(this), false)
-      document.addEventListener('mouseup', this._up.bind(this), false)
+      this.__board.addEventListener('mousedown', this.__down.bind(this), false)
+      document.addEventListener('mousemove', this.__move.bind(this), false)
+      document.addEventListener('mouseup', this.__up.bind(this), false)
 
-      this._board.addEventListener('touchstart', this._down.bind(this), false)
-      document.addEventListener('touchmove', this._move.bind(this), false)
-      document.addEventListener('touchend', this._up.bind(this), false)
+      this.__board.addEventListener('touchstart', this.__down.bind(this), false)
+      document.addEventListener('touchmove', this.__move.bind(this), false)
+      document.addEventListener('touchend', this.__up.bind(this), false)
 
     }
 
-    _down(e) {
+    __down(e) {
 
-      this._downPoint.x = e.pageX
-      this._downPoint.y = e.pageY
+      this.__downPoint.x = e.pageX
+      this.__downPoint.y = e.pageY
 
-      this._downClipSize.w = this._clipSize.w
-      this._downClipSize.h = this._clipSize.h
+      this.__downClipSize.w = this.__clipSize.w
+      this.__downClipSize.h = this.__clipSize.h
 
-      this._isMouseDown = true
+      this.__isMouseDown = true
 
       e.preventDefault()
 
     }
 
-    _move(e) {
+    __move(e) {
 
-      const isMoveAble = this._isMouseDown && (e.target == this._board || e.target == this._clipRect) && (!this._resizeTarget)
+      const isMoveAble = this.__isMouseDown && (e.target == this.__board || e.target == this.__clipRect) && (!this.__resizeTarget)
 
       if (isMoveAble) {
-        const posRange = this._posRange
-        const clipRectPos = this._clipRectPos
-        let x = e.pageX + this._startPoint.x - this._downPoint.x
-        let y = e.pageY + this._startPoint.y - this._downPoint.y
+        const posRange = this.__posRange
+        const clipRectPos = this.__clipRectPos
+        let x = e.pageX + this.__startPoint.x - this.__downPoint.x
+        let y = e.pageY + this.__startPoint.y - this.__downPoint.y
 
         if (x < posRange.x[0]) x = posRange.x[0]
         if (x > posRange.x[1]) x = posRange.x[1]
         if (y < posRange.y[0]) y = posRange.y[0]
         if (y > posRange.y[1]) y = posRange.y[1]
 
-        this._board.style.cssText = `transform:translate3d(${x}px,${y}px,0)`
+        this.__board.style.cssText = `transform:translate3d(${x}px,${y}px,0)`
         clipRectPos.x = x
         clipRectPos.y = y
 
-        this._drawClip()
-        this._drawClipMask()
+        this.__drawClip()
+        this.__drawClipMask()
 
         e.preventDefault()
       }
 
     }
 
-    _up() {
+    __up() {
 
-      const matrixArr = getComputedStyle(this._board, null)['transform']
+      const matrixArr = getComputedStyle(this.__board, null)['transform']
         .slice(7, -1).replace(/\s+/g, '').split(',')
         .map(function(item) {
           return parseFloat(item)
         })
 
-      this._startPoint.x = matrixArr[4]
-      this._startPoint.y = matrixArr[5]
+      this.__startPoint.x = matrixArr[4]
+      this.__startPoint.y = matrixArr[5]
 
-      this._isMouseDown = false
+      this.__isMouseDown = false
 
-      document.removeEventListener('mousemove', this._move)
-      document.removeEventListener('mouseup', this._up)
+      document.removeEventListener('mousemove', this.__move)
+      document.removeEventListener('mouseup', this.__up)
 
-      document.removeEventListener('touchmove', this._move)
-      document.removeEventListener('touchend', this._up)
+      document.removeEventListener('touchmove', this.__move)
+      document.removeEventListener('touchend', this.__up)
 
     }
 
-    _drawClip() {
+    __drawClip() {
 
-      const clipWidth = this._clipSize.w
-      const clipHeight = this._clipSize.h
+      const clipWidth = this.__clipSize.w
+      const clipHeight = this.__clipSize.h
 
       const container = this.container
       const containerWidth = container.clientWidth
@@ -439,14 +456,14 @@
       const left = (containerWidth - clipWidth) / 2
       const top = (containerHeight - clipHeight) / 2
 
-      const board = this._board
-      const clipContainer = this._clipContainer
+      const board = this.__board
+      const clipContainer = this.__clipContainer
 
-      const clipRect = this._clipRect
-      const clipCtx = this._clipCtx
+      const clipRect = this.__clipRect
+      const clipCtx = this.__clipCtx
 
-      this._srcPos.x = left - this._clipRectPos.x
-      this._srcPos.y = top - this._clipRectPos.y
+      this.__srcPos.x = left - this.__clipRectPos.x
+      this.__srcPos.y = top - this.__clipRectPos.y
 
       clipCtx.clearRect(0, 0, containerWidth, containerHeight)
 
@@ -454,19 +471,19 @@
       clipRect.height = clipHeight
 
 
-      clipCtx.drawImage(this._boardImage, this._srcPos.x, this._srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
+      clipCtx.drawImage(this.__boardImage, this.__srcPos.x, this.__srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
 
       clipContainer.style.cssText = `left:${left}px;top:${top}px;width:${clipWidth}px;height:${clipHeight}px;`
       clipContainer.classList.add('clipContainer')
 
-      this._setPosRange()
+      this.__setPosRange()
 
     }
 
-    _drawClipMask() {
-      const clipCtx = this._clipCtx
-      const clipWidth = this._clipRect.width
-      const clipHeight = this._clipRect.height
+    __drawClipMask() {
+      const clipCtx = this.__clipCtx
+      const clipWidth = this.__clipRect.width
+      const clipHeight = this.__clipRect.height
 
       clipCtx.strokeStyle = '#fff'
 
@@ -496,10 +513,10 @@
 
     }
 
-    _clipRectInit() {
+    __clipRectInit() {
 
-      const canvas = this._clipRect
-      const clipContainer = this._clipContainer
+      const canvas = this.__clipRect
+      const clipContainer = this.__clipContainer
 
       function createSpan(id) {
         const span = document.createElement('span')
@@ -534,47 +551,47 @@
       ['ltSPAN', 'lbSPAN', 'rtSPAN', 'rbSPAN'].forEach(createSpan)
 
       // 点击事件委托给父元素
-      clipContainer.addEventListener('mousedown', this._down.bind(this), false)
-      clipContainer.addEventListener('mousedown', this._bindClipEvent.bind(this), false)
+      clipContainer.addEventListener('mousedown', this.__down.bind(this), false)
+      clipContainer.addEventListener('mousedown', this.__bindClipEvent.bind(this), false)
 
-      clipContainer.addEventListener('touchstart', this._down.bind(this), false)
-      clipContainer.addEventListener('touchstart', this._bindClipEvent.bind(this), false)
+      clipContainer.addEventListener('touchstart', this.__down.bind(this), false)
+      clipContainer.addEventListener('touchstart', this.__bindClipEvent.bind(this), false)
 
       clipContainer.appendChild(canvas)
       this.container.appendChild(clipContainer)
     }
 
-    _bindClipEvent(e) {
+    __bindClipEvent(e) {
 
-      this._resizeTarget = e.target.id
+      this.__resizeTarget = e.target.id
 
-      document.addEventListener('mousemove', this._clipRectResize.bind(this), false)
-      document.addEventListener('mouseup', this._clipRectUp.bind(this), false)
+      document.addEventListener('mousemove', this.__clipRectResize.bind(this), false)
+      document.addEventListener('mouseup', this.__clipRectUp.bind(this), false)
 
-      document.addEventListener('touchmove', this._clipRectResize.bind(this), false)
-      document.addEventListener('touchend', this._clipRectUp.bind(this), false)
+      document.addEventListener('touchmove', this.__clipRectResize.bind(this), false)
+      document.addEventListener('touchend', this.__clipRectUp.bind(this), false)
 
       e.preventDefault()
     }
 
-    _clipRectResize(e) {
+    __clipRectResize(e) {
 
-      if (this._isMouseDown && this._resizeTarget) {
+      if (this.__isMouseDown && this.__resizeTarget) {
 
-        const clipRect = this._clipRect
+        const clipRect = this.__clipRect
 
         const offX = e.offsetX
         const offY = e.offsetY
-        const disX = (e.pageX - this._downPoint.x) * 2
-        const disY = (e.pageY - this._downPoint.y) * 2
+        const disX = (e.pageX - this.__downPoint.x) * 2
+        const disY = (e.pageY - this.__downPoint.y) * 2
 
         const clipW = clipRect.width
         const clipH = clipRect.height
 
-        const downClipSize = this._downClipSize
-        const clipSize = this._clipSize
+        const downClipSize = this.__downClipSize
+        const clipSize = this.__clipSize
 
-        if (this._resizeTarget == 'ltSPAN' || this._resizeTarget == 'lbSPAN') {
+        if (this.__resizeTarget == 'ltSPAN' || this.__resizeTarget == 'lbSPAN') {
           clipSize.w = clipSize.h = downClipSize.w - disX
         } else {
           clipSize.w = clipSize.h = downClipSize.w + disX
@@ -586,8 +603,8 @@
           clipSize.w = clipSize.h = clipSize.max
         }
 
-        this._drawClip()
-        this._drawClipMask()
+        this.__drawClip()
+        this.__drawClipMask()
 
         e.preventDefault()
 
@@ -596,15 +613,15 @@
 
     }
 
-    _clipRectUp() {
+    __clipRectUp() {
 
-      this._resizeTarget = null
+      this.__resizeTarget = null
 
-      document.removeEventListener('mousemove', this._clipRectResize)
-      document.removeEventListener('mouseup', this._clipRectUp)
+      document.removeEventListener('mousemove', this.__clipRectResize)
+      document.removeEventListener('mouseup', this.__clipRectUp)
 
-      document.removeEventListener('touchmove', this._clipRectResize)
-      document.removeEventListener('touchend', this._clipRectUp)
+      document.removeEventListener('touchmove', this.__clipRectResize)
+      document.removeEventListener('touchend', this.__clipRectUp)
 
     }
 
@@ -612,18 +629,18 @@
 
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
-      const clipSize = this._clipSize
+      const clipSize = this.__clipSize
       const clipWidth = clipSize.w
       const clipHeight = clipSize.h
 
       canvas.width = clipWidth
       canvas.height = clipHeight
 
-      ctx.drawImage(this._boardImage, this._srcPos.x, this._srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
+      ctx.drawImage(this.__boardImage, this.__srcPos.x, this.__srcPos.y, clipWidth, clipHeight, 0, 0, clipWidth, clipHeight)
 
       this.clip64 = canvas.toDataURL(this.outPutOpt.type, this.outPutOpt.quality)
 
-      const binary = await this._outPutBinary()
+      const binary = await this.__outPutBinary()
       this.clipBlob = binary.blob
       this.clipArrayBuffer = binary.arrayBuffer
 
@@ -631,7 +648,7 @@
 
     }
 
-    _outPutBinary() {
+    __outPutBinary() {
 
       const self = this
       return new Promise(function(resolve, reject) {
@@ -661,19 +678,19 @@
 
     exportImage(){
       const a = document.createElement('a')
-      a.download = 'clip_image'
+      a.download = 'clip__image'
       a.href = this.clip64
       a.click()
     }
 
     reset() {
-      this._clipSize = {
+      this.__clipSize = {
         w: 100,
         h: 100,
         max: 0,
         min: 2 * buffer
       }
-      this._init()
+      this.__init()
     }
 
   }
