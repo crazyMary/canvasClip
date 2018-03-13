@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=750,user-scalable=no">
   <title>demo</title>
   <style type="text/css">
-  #container {
-    width: 400px;
-    height: 300px;
-    border: 2px solid red;
+  *{
+    box-sizing: border-box
   }
-
+  body{
+    margin: 0;
+  }
+  #container {
+    width: 100vw;
+    height: 100vh;
+  }
   </style>
 </head>
-
 <body>
   <div>
     <h1>DEMO</h1>
@@ -24,7 +27,6 @@
     <div>
       <button id="clipBtn">裁减</button>
       <button id="resetBtn">还原</button>
-      <button id="exportBtn">导出</button>
     </div>
     <div>
       <h2>base64形式输出</h2>
@@ -39,7 +41,7 @@
       <img src="" id="abImage" alt="">
     </div>
   </div>
-  <script src="./clip.js"></script>
+  <script src="../lib/clip.umd.js"></script>
   <script>
   let c = null
   fileIpt.onchange = function() {
@@ -61,9 +63,6 @@
   }
   resetBtn.onclick = function(){
     c.reset()
-  }
-  exportBtn.onclick = function(){
-    c.exportImage()
   }
   clipBtn.onclick = function() {
 

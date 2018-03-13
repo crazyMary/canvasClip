@@ -2,9 +2,9 @@
   "name": "canvasClip",
   "version": "1.0.0",
   "description": "------",
-  "main": "clip.js",
+  "main": "lib/clip.umd.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",
@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/crazyMary/canvasClip/issues"
   },
-  "homepage": "https://github.com/crazyMary/canvasClip#readme"
+  "homepage": "https://github.com/crazyMary/canvasClip#readme",
+  "devDependencies": {
+    "rollup-plugin-uglify": "^3.0.0"
+  }
 }
